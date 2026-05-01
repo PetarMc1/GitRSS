@@ -1,0 +1,9 @@
+.git
+.gitignore
+*.md
+LICENSE
+.DS_Store
+.vscode
+.env
+.env.local
+.env.*.local

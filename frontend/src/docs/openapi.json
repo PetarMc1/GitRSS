@@ -1,0 +1,226 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "GitRSS Backend API",
+    "version": "1.0.0",
+    "description": "RSS feed generator for GitHub repository activity"
+  },
+  "servers": [
+    {
+      "url": "https://gitrss.petarmc.com/api"
+    }
+  ],
+  "paths": {
+    "/rss/commits": {
+      "get": {
+        "summary": "Get commit RSS feed",
+        "parameters": [
+          { "$ref": "#/components/parameters/repo" },
+          { "$ref": "#/components/parameters/branches" },
+          { "$ref": "#/components/parameters/branchesArray" }
+        ],
+        "responses": {
+          "200": {
+            "description": "RSS feed",
+            "content": {
+              "application/rss+xml": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "429": { "$ref": "#/components/responses/RateLimited" }
+        }
+      }
+    },
+    "/rss/issues": {
+      "get": {
+        "summary": "Get issues RSS feed",
+        "parameters": [
+          { "$ref": "#/components/parameters/repo" }
+        ],
+        "responses": {
+          "200": {
+            "description": "RSS feed",
+            "content": {
+              "application/rss+xml": {
+                "schema": { "type": "string" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "429": { "$ref": "#/components/responses/RateLimited" }
+        }
+      }
+    },
+    "/rss/pulls": {
+      "get": {
+        "summary": "Get pull requests RSS feed",
+        "parameters": [
+          { "$ref": "#/components/parameters/repo" }
+        ],
+        "responses": {
+          "200": {
+            "description": "RSS feed",
+            "content": {
+              "application/rss+xml": {
+                "schema": { "type": "string" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "429": { "$ref": "#/components/responses/RateLimited" }
+        }
+      }
+    },
+    "/rss/releases": {
+      "get": {
+        "summary": "Get releases RSS feed",
+        "parameters": [
+          { "$ref": "#/components/parameters/repo" }
+        ],
+        "responses": {
+          "200": {
+            "description": "RSS feed",
+            "content": {
+              "application/rss+xml": {
+                "schema": { "type": "string" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "429": { "$ref": "#/components/responses/RateLimited" }
+        }
+      }
+    },
+    "/rss/all": {
+      "get": {
+        "summary": "Get combined RSS feed",
+        "parameters": [
+          { "$ref": "#/components/parameters/repo" },
+          { "$ref": "#/components/parameters/includeCommits" },
+          { "$ref": "#/components/parameters/includeIssues" },
+          { "$ref": "#/components/parameters/includePulls" },
+          { "$ref": "#/components/parameters/includeReleases" }
+        ],
+        "responses": {
+          "200": {
+            "description": "RSS feed",
+            "content": {
+              "application/rss+xml": {
+                "schema": { "type": "string" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "429": { "$ref": "#/components/responses/RateLimited" }
+        }
+      }
+    }
+  },
+  "components": {
+    "parameters": {
+      "repo": {
+        "name": "repo",
+        "in": "query",
+        "required": true,
+        "description": "Repository in owner/repo format",
+        "schema": {
+          "type": "string",
+          "example": "octocat/Hello-World"
+        }
+      },
+      "branches": {
+        "name": "branches",
+        "in": "query",
+        "required": false,
+        "description": "Comma-separated branch names",
+        "schema": {
+          "type": "string",
+          "example": "main,develop"
+        }
+      },
+      "branchesArray": {
+        "name": "branches[]",
+        "in": "query",
+        "required": false,
+        "style": "form",
+        "explode": true,
+        "description": "Array-style branch names (repeatable)",
+        "schema": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "includeCommits": {
+        "name": "commits",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "type": "boolean"
+        }
+      },
+      "includeIssues": {
+        "name": "issues",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "type": "boolean"
+        }
+      },
+      "includePulls": {
+        "name": "pulls",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "type": "boolean"
+        }
+      },
+      "includeReleases": {
+        "name": "releases",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "type": "boolean"
+        }
+      }
+    },
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string"
+          }
+        },
+        "required": ["error"]
+      }
+    },
+    "responses": {
+      "BadRequest": {
+        "description": "Invalid request parameters",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "RateLimited": {
+        "description": "GitHub API rate limit exceeded",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      }
+    }
+  }
+}
