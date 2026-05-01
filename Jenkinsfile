@@ -6,7 +6,6 @@ pipeline {
     FRONTEND_IMAGE = 'gitrss-frontend'
     DOCKER_REGISTRY = "docker.petarmc.com"
     DOCKER_NAMESPACE = "petarmc"
-    DOCKER_CREDENTIALS_ID = "docker-registry-credentials"
     IMAGE_TAG = "${env.BUILD_NUMBER}"
   }
 
@@ -58,13 +57,10 @@ pipeline {
     }
 
     stage('Push Docker Images') {
-      when {
-        expression { return params.PUSH_IMAGES }
-      }
       steps {
         withCredentials([
           usernamePassword(
-            credentialsId: params.DOCKER_CREDENTIALS_ID,
+            credentialsId: 'docker-registry-credentials',
             usernameVariable: 'DOCKER_USER',
             passwordVariable: 'DOCKER_PASS'
           )
