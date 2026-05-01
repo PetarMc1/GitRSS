@@ -32,7 +32,7 @@ COPY frontend/nginx.conf /etc/nginx/nginx.conf
 COPY --from=builder /build/dist /usr/share/nginx/html
 
 # Copy docs directory for OpenAPI/Swagger
-COPY docs /usr/share/nginx/html/docs
+COPY frontend/src/docs /usr/share/nginx/html/docs
 
 # Expose port
 EXPOSE 3000
