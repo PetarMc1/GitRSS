@@ -66,10 +66,10 @@ pipeline {
           )
         ]) {
           sh '''
-            docker login ${DOCKER_REGISTRY} -u "$DOCKER_USER" --password-stdin
+            echo "$DOCKER_PASS" | docker login ${DOCKER_REGISTRY} -u "$DOCKER_USER" --password-stdin
             docker push ${DOCKER_REGISTRY}/${DOCKER_NAMESPACE}/${BACKEND_IMAGE}:${IMAGE_TAG}
             docker push ${DOCKER_REGISTRY}/${DOCKER_NAMESPACE}/${BACKEND_IMAGE}:latest
-            
+
             docker push ${DOCKER_REGISTRY}/${DOCKER_NAMESPACE}/${FRONTEND_IMAGE}:${IMAGE_TAG}
             docker push ${DOCKER_REGISTRY}/${DOCKER_NAMESPACE}/${FRONTEND_IMAGE}:latest
             docker logout ${DOCKER_REGISTRY}
