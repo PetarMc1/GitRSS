@@ -1,8 +1,10 @@
 import express from 'express';
 import cors from 'cors';
 import { getGithubToken, getRedisUrl, getServerPort } from './config/env.js';
+import { adminRouter } from './routes/admin.js';
 import { rssRouter } from './routes/rss.js';
 import { buildGithubHeaders } from './services/githubClient.js';
+import { captureRequestAudit } from './services/requestAudit.js';
 import { getRedisClient, isRedisAvailable } from './services/redisClient.js';
 import { isHttpError } from './utils/http.js';
 import { logger } from './utils/logger.js';
@@ -12,6 +14,11 @@ const port = getServerPort();
 
 app.use(cors());
 app.use(express.json());
+app.use((req, res, next) => {
+  captureRequestAudit(req, res);
+  next();
+});
+app.use('/admin-api', adminRouter);
 app.use('/rss', async (_req, res, next) => {
   const redisAvailable = await isRedisAvailable();
   if (!redisAvailable) {

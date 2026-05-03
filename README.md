@@ -23,13 +23,14 @@ cd GitRSS
 docker compose up -d
 ```
 
-This will start the services. The frontend will be available at `http://localhost:3000` and the backend API at `http://localhost:3000/api`.
+This starts all services. Frontend is served from a reverse proxy host on port 3000, and backend API is exposed under the `/api` path on the same host.
 
 ### Environment Variables
 #### Backend
 - `GITHUB_TOKEN`: optional GitHub token
 - `REDIS_URL`: redis database url
 - `DEEP_REFRESH_DAYS`: interval for "deep" refreshes of older pages (refetches all X pages of a feed not only the last one)
+- `ADMIN_PASSWORD`: password used by the admin page (`/admin`) for cache/request diagnostics
 
 ## Caching Behavior
 - commit data is cached by pages in the redis db
@@ -43,3 +44,8 @@ This will start the services. The frontend will be available at `http://localhos
 
 ## API Endpoints
 API Docs available at [gitrss.petarmc.com/api-docs](https://gitrss.petarmc.com/api-docs)
+
+### Admin Diagnostics
+- frontend route: `/admin`
+- backend API: `/admin-api/login` and `/admin-api/overview`
+- shows recent requests and Redis cache details (deep cached vs non-deep cached pages)

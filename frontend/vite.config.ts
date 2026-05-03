@@ -7,6 +7,7 @@ export default defineConfig({
     port: 3000,
     proxy: {
       '/rss': 'http://localhost:4000',
+      '/admin-api': 'http://localhost:4000',
     },
   },
 });

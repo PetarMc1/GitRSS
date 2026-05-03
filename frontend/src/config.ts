@@ -1,6 +1,15 @@
-/**
- * Base URL of the GitRSS backend.
- * Empty string → requests are relative → Vite proxy handles them in dev.
- * Non-empty (e.g. http://localhost:4000) → requests go directly to that origin.
- */
-export const API_BASE: string = import.meta.env.VITE_API_URL ?? '';
+function parseRequiredString(rawValue: string | undefined, envName: string): string {
+  const value = rawValue?.trim();
+  if (!value) {
+    throw new Error(`${envName} is required.`);
+  }
+
+  return value;
+}
+
+export const API_BASE = parseRequiredString(import.meta.env.VITE_API_URL, 'VITE_API_URL');
+
+export const ADMIN_STORAGE_KEY = parseRequiredString(
+  import.meta.env.VITE_ADMIN_STORAGE_KEY,
+  'VITE_ADMIN_STORAGE_KEY',
+);

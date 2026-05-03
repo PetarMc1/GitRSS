@@ -43,6 +43,11 @@ function parseDeepRefreshDays(rawDeepRefreshDays: string | undefined): number {
   return deepRefreshDays;
 }
 
+function parseAdminPassword(rawAdminPassword: string | undefined): string | undefined {
+  const adminPassword = rawAdminPassword?.trim();
+  return adminPassword ? adminPassword : undefined;
+}
+
 export function getServerPort(): number {
   return parsePort(process.env.PORT);
 }
@@ -57,4 +62,8 @@ export function getRedisUrl(): string | undefined {
 
 export function getDeepRefreshDays(): number {
   return parseDeepRefreshDays(process.env.DEEP_REFRESH_DAYS);
+}
+
+export function getAdminPassword(): string | undefined {
+  return parseAdminPassword(process.env.ADMIN_PASSWORD);
 }

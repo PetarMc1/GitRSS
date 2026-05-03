@@ -3,8 +3,8 @@ FROM node:20-alpine AS builder
 
 WORKDIR /build
 
-# Allow setting the API URL at build time so Vite embeds it into the bundle
 ENV VITE_API_URL=/api
+ENV VITE_ADMIN_STORAGE_KEY=gitrss-admin-session
 
 # Install pnpm
 RUN npm install -g pnpm@10

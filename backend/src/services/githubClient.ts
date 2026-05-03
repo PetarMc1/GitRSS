@@ -1,4 +1,5 @@
 import { getGithubToken } from '../config/env.js';
+import { updateGithubRateLimitSnapshot } from './githubRateLimitState.js';
 import { HttpError } from '../utils/http.js';
 import { logger } from '../utils/logger.js';
 
@@ -90,6 +91,8 @@ export async function githubConditionalRequest<T>(
     },
   });
 
+  updateGithubRateLimitSnapshot(response.headers);
+
   const rateLimitRemaining = response.headers.get('x-ratelimit-remaining');
   if (response.status === 429 || (response.status === 403 && rateLimitRemaining === '0')) {
     const retryAfter = getRateLimitRetryAfterSeconds(response);
@@ -128,6 +131,8 @@ export async function githubRequest<T>(options: GithubRequestOptions): Promise<T
   const response = await fetch(requestUrl, {
     headers: buildGithubHeaders(),
   });
+
+  updateGithubRateLimitSnapshot(response.headers);
 
   const rateLimitRemaining = response.headers.get('x-ratelimit-remaining');
   if (response.status === 429 || (response.status === 403 && rateLimitRemaining === '0')) {

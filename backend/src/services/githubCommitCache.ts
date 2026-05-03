@@ -7,8 +7,8 @@ import { logger } from '../utils/logger.js';
 
 const COMMITS_PER_PAGE = 100;
 const HOT_PAGE_TTL_SECONDS = 300;
-const COLD_PAGE_TTL_SECONDS = 432_000;
 const MAX_NOTIFICATION_EVENTS = 200;
+const SECONDS_PER_DAY = 86_400;
 const MILLIS_PER_DAY = 86_400_000;
 
 type RawGithubCommit = {
@@ -77,7 +77,11 @@ function getSyncNotificationsKey(repoScope: string): string {
 }
 
 function getPageTtlSeconds(page: number): number {
-  return page === 1 ? HOT_PAGE_TTL_SECONDS : COLD_PAGE_TTL_SECONDS;
+  return page === 1 ? HOT_PAGE_TTL_SECONDS : getColdPageTtlSeconds();
+}
+
+function getColdPageTtlSeconds(): number {
+  return getDeepRefreshDays() * SECONDS_PER_DAY;
 }
 
 async function readCacheValue(key: string): Promise<string | undefined> {
@@ -125,7 +129,7 @@ async function recordSyncEvent(
     .multi()
     .lPush(notificationKey, payload)
     .lTrim(notificationKey, 0, MAX_NOTIFICATION_EVENTS - 1)
-    .expire(notificationKey, COLD_PAGE_TTL_SECONDS)
+    .expire(notificationKey, getColdPageTtlSeconds())
     .exec();
 }
 
@@ -239,7 +243,7 @@ async function writeMetadata(repoScope: string, pageCount: number): Promise<void
       initializedAt: existing?.initializedAt ?? new Date().toISOString(),
       syncedAt: new Date().toISOString(),
     } satisfies CommitSyncMetadata,
-    COLD_PAGE_TTL_SECONDS,
+    getColdPageTtlSeconds(),
   );
 }
 
