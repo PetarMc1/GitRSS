@@ -20,6 +20,7 @@ services:
       REDIS_URL: redis://redis:6379
 #      GITHUB_TOKEN: ${GITHUB_TOKEN:-} #optional, if not provided, unauthenticated requests will be made to the github api which will result in lower rate limits
       DEEP_REFRESH_DAYS: 10
+      ADMIN_PASSWORD: change_me
     restart: unless-stopped
 
 
