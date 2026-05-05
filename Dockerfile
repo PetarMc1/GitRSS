@@ -1,4 +1,3 @@
-# Build frontend assets
 FROM node:20-alpine AS frontend-builder
 
 WORKDIR /build/frontend
@@ -13,6 +12,7 @@ RUN pnpm install --frozen-lockfile
 
 COPY frontend/src ./src
 COPY frontend/index.html frontend/vite.config.ts frontend/tsconfig.json ./
+
 RUN pnpm build
 
 FROM node:20-alpine AS backend-builder
@@ -26,6 +26,7 @@ RUN pnpm install --frozen-lockfile
 
 COPY backend/src ./src
 COPY backend/tsconfig.json ./
+
 RUN pnpm build
 
 FROM node:20-alpine AS backend-runtime-deps
@@ -45,6 +46,7 @@ RUN apk add --no-cache nginx
 
 COPY --from=backend-runtime-deps /app/backend/node_modules /app/backend/node_modules
 COPY --from=backend-builder /build/backend/dist /app/backend/dist
+
 COPY --from=frontend-builder /build/frontend/dist /usr/share/nginx/html
 COPY frontend/src/docs /usr/share/nginx/html/docs
 
@@ -55,4 +57,4 @@ ENV PORT=4000
 
 EXPOSE 80
 
-ENTRYPOINT ["/entrypoint.sh"]
+CMD sh -c "node /app/backend/dist/index.js & nginx -g 'daemon off;'"
