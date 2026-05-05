@@ -5,8 +5,8 @@ import { getRedisClient, isRedisAvailable } from "../services/redisClient.js";
 import { getRecentRequests } from "../services/requestAudit.js";
 import { HttpError } from "../utils/http.js";
 
-type CachedCommitPage = {
-  commits: Array<{ id: string }>;
+type CachedItemPage = {
+  items: Array<{ id: string }>;
   lastFetched: string;
 };
 
@@ -15,7 +15,7 @@ type CachePageEntry = {
   repoScope: string;
   page: number;
   isDeepCached: boolean;
-  commitCount: number;
+  itemCount: number;
   lastFetched: string;
   ttlSeconds: number;
 };
@@ -29,7 +29,7 @@ type RepoCacheBreakdownEntry = {
   nonDeepTtlSeconds: number | null;
 };
 
-const CACHE_PAGE_KEY_RE = /^data:(.+):commits:page:(\d+)$/;
+const CACHE_PAGE_KEY_RE = /^data:(.+):page:(\d+)$/;
 const maxAdminLoginAttempts = 5;
 const adminBlockWindow = 15 * 60 * 1000;
 
@@ -136,7 +136,7 @@ async function readCachePages(): Promise<CachePageEntry[]> {
   const pages: CachePageEntry[] = [];
 
   for await (const key of redis.scanIterator({
-    MATCH: "data:*:commits:page:*",
+    MATCH: "data:*:page:*",
     COUNT: 100,
   })) {
     const match = CACHE_PAGE_KEY_RE.exec(key);
@@ -158,13 +158,13 @@ async function readCachePages(): Promise<CachePageEntry[]> {
       continue;
     }
 
-    const parsed = JSON.parse(rawPage) as CachedCommitPage;
+    const parsed = JSON.parse(rawPage) as CachedItemPage;
     pages.push({
       key,
       repoScope,
       page,
       isDeepCached: page > 1,
-      commitCount: parsed.commits.length,
+      itemCount: parsed.items.length,
       lastFetched: parsed.lastFetched,
       ttlSeconds,
     });
@@ -275,8 +275,8 @@ adminRouter.get("/overview", async (req, res) => {
   const [cachePages, etagKeys, metadataKeys, notificationsKeys] =
     await Promise.all([
       readCachePages(),
-      countKeys("etag:*:commits:page:*"),
-      countKeys("meta:*:commits"),
+      countKeys("etag:*:page:*"),
+      countKeys("meta:*"),
       countKeys("notifications:*:sync"),
     ]);
 

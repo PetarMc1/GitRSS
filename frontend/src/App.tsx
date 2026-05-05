@@ -54,7 +54,7 @@ type CachePageEntry = {
   repoScope: string;
   page: number;
   isDeepCached: boolean;
-  commitCount: number;
+  itemCount: number;
   lastFetched: string;
   ttlSeconds: number;
 };
@@ -641,7 +641,7 @@ function AdminPage() {
 
             <div className="admin-section">
               <h3>Cache explorer</h3>
-              <p className="static-page_updated">Deep and non-deep commit cache pages are separated below.</p>
+              <p className="static-page_updated">Deep and non-deep cache pages are separated below.</p>
 
               {overview.cache.repoBreakdown.length === 0 ? (
                 <p className="static-page_empty">No cache pages found.</p>

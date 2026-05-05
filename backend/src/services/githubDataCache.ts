@@ -8,7 +8,8 @@ const SECONDS_PER_DAY = 86_400;
 const msPerDay = 86_400_000;
 const maxNotifsEvents = 200;
 
-// Hot page (page 1) is refreshed frequently, cold pages use deep refresh
+// a hot page is the first page of results
+// it has a shorter TTL since new commits/issues/PRs/releases appear on the first page and we want to keep it fresh
 const hotPageTTL = 300; // 5 minutes
 const ghItemsPerPage = 100;
 
@@ -167,7 +168,6 @@ async function persistDataPage<T extends CacheableItem>(
 
   const tx = redis.multi().set(pageKey, pagePayload, { EX: ttl });
 
-  // Only store ETags for hot pages (page 1)
   if (etag && shouldStoreEtag(page)) {
     tx.set(etagKey, etag, { EX: ttl });
   }
@@ -312,7 +312,6 @@ async function syncDataPage<T extends CacheableItem>(
   await recordSyncEvent(repoScope, "cache-miss", { page });
   logger.info("Data cache miss", { repoScope, page });
 
-  // Only check ETag for hot pages (page 1)
   const cachedEtag = shouldStoreEtag(page)
     ? await readPageEtag(repoScope, page)
     : undefined;
@@ -483,6 +482,33 @@ async function performInitialSync<T extends CacheableItem>(
   return pages.flat();
 }
 
+function normalizeCommit(raw: unknown): GithubCommit {
+  const r = raw as RawGithubCommit;
+  return {
+    id: r.sha,
+    title: r.commit.message,
+    author: r.commit.author.name,
+    date: r.commit.author.date,
+    url: r.html_url,
+  };
+}
+
+export async function fetchCachedCommits(
+  owner: string,
+  repo: string,
+  branch?: string,
+): Promise<GithubCommit[]> {
+  return fetchCachedData<GithubCommit>({
+    owner,
+    repo,
+    type: "commits",
+    path: `/repos/${owner}/${repo}/commits`,
+    query: branch ? { sha: branch } : {},
+    ...(branch !== undefined ? { queryIdentifier: branch } : {}),
+    normalizer: normalizeCommit,
+  });
+}
+
 export async function fetchCachedData<T extends CacheableItem>(
   options: {
     owner: string;
@@ -503,11 +529,14 @@ export async function fetchCachedData<T extends CacheableItem>(
   const metadata = await readMetadata(repoScope);
 
   if (!metadata) {
+    const normalizerOpt = options.normalizer !== undefined
+      ? { normalizer: options.normalizer }
+      : {};
     return performInitialSync(
       options.path,
       options.query ?? {},
       repoScope,
-      { normalizer: options.normalizer },
+      normalizerOpt,
     );
   }
 
@@ -531,7 +560,7 @@ export async function fetchCachedData<T extends CacheableItem>(
       page,
       {
         forceEtagCheck: page === 1,
-        normalizer: options.normalizer,
+        ...(options.normalizer !== undefined ? { normalizer: options.normalizer } : {}),
       },
     );
 
