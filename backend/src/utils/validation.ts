@@ -52,6 +52,17 @@ export function parseBaseGithubQuery(rawQuery: Record<string, unknown>): BaseGit
   return { owner, repo };
 }
 
+const VALID_ITEM_STATES = ['open', 'closed', 'all'] as const;
+export type ItemState = (typeof VALID_ITEM_STATES)[number];
+
+export function parseItemState(rawQuery: Record<string, unknown>): ItemState {
+  const value = rawQuery.state;
+  if (typeof value === 'string' && (VALID_ITEM_STATES as readonly string[]).includes(value.toLowerCase())) {
+    return value.toLowerCase() as ItemState;
+  }
+  return 'all';
+}
+
 export function parseCommitFilters(rawQuery: Record<string, unknown>): CommitFilters {
   const base = parseBaseGithubQuery(rawQuery);
   const branchesCsv = asNonEmptyString(rawQuery.branches);

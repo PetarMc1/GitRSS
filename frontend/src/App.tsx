@@ -5,10 +5,11 @@ import { CommitFilters } from './components/CommitFilters';
 import { FeedTypeSelector } from './components/FeedTypeSelector';
 import { RepoInput } from './components/RepoInput';
 import { RssOutput } from './components/RssOutput';
+import { StateFilter } from './components/StateFilter';
 import { ADMIN_STORAGE_KEY, API_BASE } from './config';
 import { useBackendHealth } from './hooks/useBackendHealth';
 import { buildRssUrl } from './hooks/useRssUrl';
-import type { AllFeedState, CommitFiltersState, FeedType } from './types';
+import type { AllFeedState, CommitFiltersState, FeedType, ItemState } from './types';
 import { parseApiError, parseNetworkError } from './utils/parseApiError';
 import { validateForm } from './utils/validation';
 import 'swagger-ui-react/swagger-ui.css';
@@ -736,10 +737,14 @@ function HomePage({
   const [repo, setRepo] = useState('');
   const [feedType, setFeedType] = useState<FeedType>('commits');
   const [commitFilters, setCommitFilters] = useState<CommitFiltersState>({ branches: '' });
+  const [issuesState, setIssuesState] = useState<ItemState>('all');
+  const [pullsState, setPullsState] = useState<ItemState>('all');
   const [allFeed, setAllFeed] = useState<AllFeedState>({
     commits: true,
     issues: true,
+    issuesState: 'all',
     pulls: true,
+    pullsState: 'all',
     releases: true,
   });
   const [generatedUrl, setGeneratedUrl] = useState<string | null>(null);
@@ -753,7 +758,7 @@ function HomePage({
       return;
     }
     setValidationError(null);
-    setGeneratedUrl(buildRssUrl(repo, feedType, commitFilters, allFeed));
+    setGeneratedUrl(buildRssUrl(repo, feedType, commitFilters, allFeed, issuesState, pullsState));
   };
 
   const handleRepoChange = (value: string) => {
@@ -778,6 +783,14 @@ function HomePage({
 
         {feedType === 'commits' && (
           <CommitFilters value={commitFilters} onChange={setCommitFilters} />
+        )}
+
+        {feedType === 'issues' && (
+          <StateFilter label="Status" value={issuesState} onChange={setIssuesState} />
+        )}
+
+        {feedType === 'pulls' && (
+          <StateFilter label="Status" value={pullsState} onChange={setPullsState} />
         )}
 
         {feedType === 'all' && (

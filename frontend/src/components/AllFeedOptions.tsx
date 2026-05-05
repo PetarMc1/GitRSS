@@ -1,11 +1,12 @@
 import type { AllFeedState } from '../types';
+import { StateFilter } from './StateFilter';
 
 interface Props {
   value: AllFeedState;
   onChange: (value: AllFeedState) => void;
 }
 
-const OPTIONS: { key: keyof AllFeedState; label: string }[] = [
+const TOGGLES: { key: 'commits' | 'issues' | 'pulls' | 'releases'; label: string }[] = [
   { key: 'commits', label: 'Commits' },
   { key: 'issues', label: 'Issues' },
   { key: 'pulls', label: 'Pull Requests' },
@@ -13,7 +14,7 @@ const OPTIONS: { key: keyof AllFeedState; label: string }[] = [
 ];
 
 export function AllFeedOptions({ value, onChange }: Props) {
-  const toggle = (key: keyof AllFeedState) => {
+  const toggle = (key: 'commits' | 'issues' | 'pulls' | 'releases') => {
     onChange({ ...value, [key]: !value[key] });
   };
 
@@ -21,7 +22,7 @@ export function AllFeedOptions({ value, onChange }: Props) {
     <div className="filter-group">
       <span className="label">Include</span>
       <div className="checkbox-group">
-        {OPTIONS.map((opt) => (
+        {TOGGLES.map((opt) => (
           <label key={opt.key} className="checkbox-label">
             <input
               type="checkbox"
@@ -32,6 +33,22 @@ export function AllFeedOptions({ value, onChange }: Props) {
           </label>
         ))}
       </div>
+
+      {value.issues && (
+        <StateFilter
+          label="Issues Status"
+          value={value.issuesState}
+          onChange={(s) => onChange({ ...value, issuesState: s })}
+        />
+      )}
+
+      {value.pulls && (
+        <StateFilter
+          label="Pull Requests Status"
+          value={value.pullsState}
+          onChange={(s) => onChange({ ...value, pullsState: s })}
+        />
+      )}
     </div>
   );
 }

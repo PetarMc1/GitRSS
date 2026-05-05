@@ -14,7 +14,7 @@ import { HttpError } from '../utils/http.js';
 import { logger } from '../utils/logger.js';
 import { generateRssXml } from '../utils/rss.js';
 import { isHttpError } from '../utils/http.js';
-import { parseBaseGithubQuery, parseCommitFilters } from '../utils/validation.js';
+import { parseBaseGithubQuery, parseCommitFilters, parseItemState } from '../utils/validation.js';
 
 const rssRouter: ExpressRouter = Router();
 
@@ -167,8 +167,10 @@ rssRouter.get('/commits', async (req, res, next) => {
 
 rssRouter.get('/issues', async (req, res, next) => {
   await sendCachedRss('issues', req.query as Record<string, unknown>, res, next, async () => {
-    const query = parseBaseGithubQuery(req.query as Record<string, unknown>);
-    const issues = await fetchIssues(query.owner, query.repo);
+    const rawQuery = req.query as Record<string, unknown>;
+    const query = parseBaseGithubQuery(rawQuery);
+    const state = parseItemState(rawQuery);
+    const issues = await fetchIssues(query.owner, query.repo, state);
 
     const items: RssItem[] = issues.map((issue) => ({
       title: issue.title,
@@ -189,8 +191,10 @@ rssRouter.get('/issues', async (req, res, next) => {
 
 rssRouter.get('/pulls', async (req, res, next) => {
   await sendCachedRss('pulls', req.query as Record<string, unknown>, res, next, async () => {
-    const query = parseBaseGithubQuery(req.query as Record<string, unknown>);
-    const pulls = await fetchPullRequests(query.owner, query.repo);
+    const rawQuery = req.query as Record<string, unknown>;
+    const query = parseBaseGithubQuery(rawQuery);
+    const state = parseItemState(rawQuery);
+    const pulls = await fetchPullRequests(query.owner, query.repo, state);
 
     const items: RssItem[] = pulls.map((pull) => ({
       title: pull.title,
@@ -255,11 +259,13 @@ rssRouter.get('/all', async (req, res, next) => {
     }
 
     if (includeIssues) {
-      tasks.push(fetchIssues(query.owner, query.repo).then((issues) => issues.map(normalizeIssueItem)));
+      const issuesState = parseItemState({ state: rawQuery.issues_state });
+      tasks.push(fetchIssues(query.owner, query.repo, issuesState).then((issues) => issues.map(normalizeIssueItem)));
     }
 
     if (includePulls) {
-      tasks.push(fetchPullRequests(query.owner, query.repo).then((pulls) => pulls.map(normalizePullItem)));
+      const pullsState = parseItemState({ state: rawQuery.pulls_state });
+      tasks.push(fetchPullRequests(query.owner, query.repo, pullsState).then((pulls) => pulls.map(normalizePullItem)));
     }
 
     if (includeReleases) {

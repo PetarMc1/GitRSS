@@ -71,11 +71,11 @@ export async function fetchCommitsForBranch(
   return fetchCachedCommits(owner, repo, options.branch);
 }
 
-export async function fetchIssues(owner: string, repo: string): Promise<GithubIssue[]> {
+export async function fetchIssues(owner: string, repo: string, state: 'open' | 'closed' | 'all' = 'all'): Promise<GithubIssue[]> {
   const rawIssues = await githubPaginatedRequest<RawGithubIssue>({
     path: `/repos/${owner}/${repo}/issues`,
     query: {
-      state: 'all',
+      state,
     },
   }, { perPage: GITHUB_ITEMS_PER_PAGE, maxPages: 1 });
 
@@ -90,11 +90,11 @@ export async function fetchIssues(owner: string, repo: string): Promise<GithubIs
     }));
 }
 
-export async function fetchPullRequests(owner: string, repo: string): Promise<GithubPullRequest[]> {
+export async function fetchPullRequests(owner: string, repo: string, state: 'open' | 'closed' | 'all' = 'all'): Promise<GithubPullRequest[]> {
   const rawPulls = await githubPaginatedRequest<RawGithubPullRequest>({
     path: `/repos/${owner}/${repo}/pulls`,
     query: {
-      state: 'all',
+      state,
       sort: 'updated',
       direction: 'desc',
     },
