@@ -1,7 +1,4 @@
-import { githubPaginatedRequest } from "./githubClient.js";
-import { fetchCachedCommits } from "./githubCommitCache.js";
-
-const ghItemsPerPage = 100;
+import { fetchCachedCommits, fetchCachedData } from "./githubDataCache.js";
 
 export type GithubCommit = {
   id: string;
@@ -76,25 +73,30 @@ export async function fetchIssues(
   repo: string,
   state: "open" | "closed" | "all" = "all",
 ): Promise<GithubIssue[]> {
-  const rawIssues = await githubPaginatedRequest<RawGithubIssue>(
-    {
-      path: `/repos/${owner}/${repo}/issues`,
-      query: {
-        state,
-      },
+  const allItems = await fetchCachedData<any>({
+    owner,
+    repo,
+    type: "issues",
+    path: `/repos/${owner}/${repo}/issues`,
+    query: { state },
+    queryIdentifier: state,
+    normalizer: (raw: unknown) => {
+      const issue = raw as RawGithubIssue;
+      // Filter out pull requests from issues endpoint
+      if (issue.pull_request) {
+        return null;
+      }
+      return {
+        id: String(issue.id),
+        title: issue.title,
+        author: issue.user.login,
+        date: issue.updated_at,
+        url: issue.html_url,
+      };
     },
-    { perPage: ghItemsPerPage, maxPages: 1 },
-  );
+  });
 
-  return rawIssues
-    .filter((issue) => !issue.pull_request)
-    .map((issue) => ({
-      id: String(issue.id),
-      title: issue.title,
-      author: issue.user.login,
-      date: issue.updated_at,
-      url: issue.html_url,
-    }));
+  return allItems.filter((item): item is GithubIssue => item !== null);
 }
 
 export async function fetchPullRequests(
@@ -102,45 +104,54 @@ export async function fetchPullRequests(
   repo: string,
   state: "open" | "closed" | "all" = "all",
 ): Promise<GithubPullRequest[]> {
-  const rawPulls = await githubPaginatedRequest<RawGithubPullRequest>(
-    {
-      path: `/repos/${owner}/${repo}/pulls`,
-      query: {
-        state,
-        sort: "updated",
-        direction: "desc",
-      },
+  return fetchCachedData<GithubPullRequest>({
+    owner,
+    repo,
+    type: "pulls",
+    path: `/repos/${owner}/${repo}/pulls`,
+    query: {
+      state,
+      sort: "updated",
+      direction: "desc",
     },
-    { perPage: ghItemsPerPage, maxPages: 1 },
-  );
-
-  return rawPulls.map((pull) => ({
-    id: String(pull.id),
-    title: pull.title,
-    author: pull.user.login,
-    date: pull.updated_at,
-    url: pull.html_url,
-  }));
+    queryIdentifier: state,
+    normalizer: (raw: unknown) => {
+      const pull = raw as RawGithubPullRequest;
+      return {
+        id: String(pull.id),
+        title: pull.title,
+        author: pull.user.login,
+        date: pull.updated_at,
+        url: pull.html_url,
+      };
+    },
+  });
 }
 
 export async function fetchReleases(
   owner: string,
   repo: string,
 ): Promise<GithubRelease[]> {
-  const rawReleases = await githubPaginatedRequest<RawGithubRelease>(
-    {
-      path: `/repos/${owner}/${repo}/releases`,
+  const allItems = await fetchCachedData<any>({
+    owner,
+    repo,
+    type: "releases",
+    path: `/repos/${owner}/${repo}/releases`,
+    normalizer: (raw: unknown) => {
+      const release = raw as RawGithubRelease;
+      // Filter out draft and unpublished releases
+      if (release.draft || !release.published_at) {
+        return null;
+      }
+      return {
+        id: String(release.id),
+        title: release.name || release.tag_name,
+        tag: release.tag_name,
+        date: release.published_at,
+        url: release.html_url,
+      };
     },
-    { perPage: ghItemsPerPage, maxPages: 1 },
-  );
+  });
 
-  return rawReleases
-    .filter((release) => !release.draft && !!release.published_at)
-    .map((release) => ({
-      id: String(release.id),
-      title: release.name || release.tag_name,
-      tag: release.tag_name,
-      date: release.published_at as string,
-      url: release.html_url,
-    }));
+  return allItems.filter((item): item is GithubRelease => item !== null);
 }
