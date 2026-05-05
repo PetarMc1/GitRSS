@@ -13,7 +13,10 @@ A tool used to generate RSS feeds for GitHub repositories, providing updates on 
 - automatically handles github api rate limits, still serves cached pages
 
 ## Deployment
-The app can be deployed using Docker. A `docker-compose.yml` file is provided for easy setup with Redis. The images are available at `docker.petarmc.com`.
+> [!WARNING]
+> If you are still using the `docker.petarmc.com` docker repository, please switch to the Docker Hub image.
+
+The app can be deployed using Docker. A `docker-compose.yml` file is provided for easy setup with Redis. The images are available at [Docker Hub](https://hub.docker.com/r/petarmc/gitrss).
 
 To run with Docker Compose:
 
@@ -23,7 +26,7 @@ cd GitRSS
 docker compose up -d
 ```
 
-This starts all services. Frontend is served from a reverse proxy host on port 3000, and backend API is exposed under the `/api` path on the same host.
+This starts the app (single unified container) and Redis. Frontend is served on port 3000 and backend API is exposed under the `/api` path on the same host.
 
 ### Environment Variables
 #### Backend
@@ -33,12 +36,11 @@ This starts all services. Frontend is served from a reverse proxy host on port 3
 - `ADMIN_PASSWORD`: password used by the admin page (`/admin`) for cache/request diagnostics
 
 ## Caching Behavior
-- commit data is cached by pages in the redis db
+- all data is cached by pages in the redis db
 - each page has:
   - data key
-  - ETag key
 - page 1 is always checked using ETag
-- older pages are checked only when deep refresh time is reached
+- older pages are refetched only when deep refresh time is reached
 - if there are rate limits on Github API the backend will still be able to serve old cached pages
 
 

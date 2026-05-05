@@ -2,8 +2,7 @@ pipeline {
   agent any
 
   environment {
-    BACKEND_IMAGE = 'gitrss-backend'
-    FRONTEND_IMAGE = 'gitrss-frontend'
+    APP_IMAGE = 'gitrss'
     DOCKER_REGISTRY = "docker.petarmc.com"
     DOCKER_NAMESPACE = "petarmc"
     IMAGE_TAG = "${env.BUILD_NUMBER}"
@@ -42,21 +41,17 @@ pipeline {
       }
     }
 
-    stage('Build Docker Images') {
+    stage('Build Docker Image') {
       steps {
         sh '''
-          docker build -f backend/Dockerfile \
-            -t ${DOCKER_REGISTRY}/${DOCKER_NAMESPACE}/${BACKEND_IMAGE}:${IMAGE_TAG} \
-            -t ${DOCKER_REGISTRY}/${DOCKER_NAMESPACE}/${BACKEND_IMAGE}:latest .
-
-          docker build -f frontend/Dockerfile \
-            -t ${DOCKER_REGISTRY}/${DOCKER_NAMESPACE}/${FRONTEND_IMAGE}:${IMAGE_TAG} \
-            -t ${DOCKER_REGISTRY}/${DOCKER_NAMESPACE}/${FRONTEND_IMAGE}:latest .
+          docker build -f Dockerfile \
+            -t ${DOCKER_REGISTRY}/${DOCKER_NAMESPACE}/${APP_IMAGE}:${IMAGE_TAG} \
+            -t ${DOCKER_REGISTRY}/${DOCKER_NAMESPACE}/${APP_IMAGE}:latest .
         '''
       }
     }
 
-    stage('Push Docker Images') {
+    stage('Push Docker Image') {
       steps {
         withCredentials([
           usernamePassword(
@@ -67,11 +62,8 @@ pipeline {
         ]) {
           sh '''
             echo "$DOCKER_PASS" | docker login ${DOCKER_REGISTRY} -u "$DOCKER_USER" --password-stdin
-            docker push ${DOCKER_REGISTRY}/${DOCKER_NAMESPACE}/${BACKEND_IMAGE}:${IMAGE_TAG}
-            docker push ${DOCKER_REGISTRY}/${DOCKER_NAMESPACE}/${BACKEND_IMAGE}:latest
-
-            docker push ${DOCKER_REGISTRY}/${DOCKER_NAMESPACE}/${FRONTEND_IMAGE}:${IMAGE_TAG}
-            docker push ${DOCKER_REGISTRY}/${DOCKER_NAMESPACE}/${FRONTEND_IMAGE}:latest
+            docker push ${DOCKER_REGISTRY}/${DOCKER_NAMESPACE}/${APP_IMAGE}:${IMAGE_TAG}
+            docker push ${DOCKER_REGISTRY}/${DOCKER_NAMESPACE}/${APP_IMAGE}:latest
             docker logout ${DOCKER_REGISTRY}
           '''
         }

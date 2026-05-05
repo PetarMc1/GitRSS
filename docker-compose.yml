@@ -1,19 +1,10 @@
 services:
 
-  reverseproxy:
-      image: nginx:alpine
-      ports:
-        - "3000:80"
-      depends_on:
-        - backend
-        - frontend
-      volumes:
-        - ./nginx/reverseproxy.conf:/etc/nginx/conf.d/default.conf:ro
-      restart: unless-stopped
-
-  backend:
-    image: docker.petarmc.com/petarmc/gitrss-backend:latest
-    container_name: backend
+  app:  
+    image: petarmc/gitrss:latest
+    container_name: gitrss-app
+    ports:
+      - "3000:80"
     depends_on:
       - redis
     environment:
@@ -21,12 +12,6 @@ services:
 #      GITHUB_TOKEN: ${GITHUB_TOKEN:-} #optional, if not provided, unauthenticated requests will be made to the github api which will result in lower rate limits
       DEEP_REFRESH_DAYS: 10
       ADMIN_PASSWORD: change_me
-    restart: unless-stopped
-
-
-  frontend:
-    image: docker.petarmc.com/petarmc/gitrss-frontend:latest
-    container_name: frontend
     restart: unless-stopped
 
   redis:
