@@ -1,6 +1,10 @@
 name: Build and Push Docker Image
 
 on:
+  push:
+    branches:
+      - main
+      - master
   release:
     types: [published]
 
@@ -23,9 +27,24 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
         
 
+      - name: Set image tags
+        id: image_tags
+        env:
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: |
+          if [ "$GITHUB_EVENT_NAME" = "push" ]; then
+            echo "tags=petarmc/gitrss:dev" >> $GITHUB_OUTPUT
+          else
+            echo "tags<<EOF" >> $GITHUB_OUTPUT
+            echo "petarmc/gitrss:latest" >> $GITHUB_OUTPUT
+            echo "petarmc/gitrss:${RELEASE_TAG}" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+          fi
+
       - name: Build and push Docker image
         uses: docker/build-push-action@v7
         with:
           context: .
           push: true
-          tags: petarmc/gitrss:dev
+          tags: ${{ steps.image_tags.outputs.tags }}
