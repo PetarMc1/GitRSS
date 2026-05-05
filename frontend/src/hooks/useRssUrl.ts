@@ -1,4 +1,4 @@
-import { API_BASE } from '../config';
+import { apiBase } from '../config';
 import type { AllFeedState, CommitFiltersState, FeedType, ItemState } from '../types';
 
 export function buildRssUrl(
@@ -38,5 +38,5 @@ export function buildRssUrl(
     if (allFeed.releases) params.set('releases', 'true');
   }
 
-  return `${API_BASE}/rss/${feedType}?${params.toString()}`;
+  return `${apiBase}/rss/${feedType}?${params.toString()}`;
 }

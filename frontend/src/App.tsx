@@ -6,7 +6,7 @@ import { FeedTypeSelector } from './components/FeedTypeSelector';
 import { RepoInput } from './components/RepoInput';
 import { RssOutput } from './components/RssOutput';
 import { StateFilter } from './components/StateFilter';
-import { ADMIN_STORAGE_KEY, API_BASE } from './config';
+import { ADMIN_STORAGE_KEY, apiBase } from './config';
 import { useBackendHealth } from './hooks/useBackendHealth';
 import { buildRssUrl } from './hooks/useRssUrl';
 import type { AllFeedState, CommitFiltersState, FeedType, ItemState } from './types';
@@ -15,18 +15,18 @@ import { validateForm } from './utils/validation';
 import 'swagger-ui-react/swagger-ui.css';
 import './App.css';
 
-const STATUS_LABEL: Record<string, string> = {
+const statusLabel: Record<string, string> = {
   checking: 'Backend: checking…',
   ok: 'Backend: online',
   degraded: 'Backend: degraded',
   unreachable: 'Backend: offline',
 };
 
-const LAST_UPDATED = '2026-04-26';
+const lastUpdated = '2026-04-26';
 
 type AppRoute = '/' | '/faq' | '/terms' | '/api-docs' | '/admin';
 
-const OPENAPI_SPEC_URL = new URL('./docs/openapi.json', import.meta.url).href;
+const openapiURL = new URL('./docs/openapi.json', import.meta.url).href;
 
 type FaqItem = {
   id: string;
@@ -99,7 +99,7 @@ type AdminOverview = {
   };
 };
 
-const FAQ_ITEMS: FaqItem[] = [
+const faqItems: FaqItem[] = [
   {
     id: 'what-is-this-app',
     question: 'What is this app?',
@@ -132,7 +132,7 @@ const FAQ_ITEMS: FaqItem[] = [
   },
 ];
 
-const TERMS_SECTIONS: TermsSection[] = [
+const termsSection: TermsSection[] = [
   {
     id: 'service-changes',
     title: 'Service Changes',
@@ -309,11 +309,11 @@ function TermsPage() {
   return (
     <section className="card static-page" aria-labelledby="terms-title">
       <h2 id="terms-title" className="static-page_title">Terms of Service</h2>
-      <p className="static-page_updated">Last updated: {LAST_UPDATED}</p>
+      <p className="static-page_updated">Last updated: {lastUpdated}</p>
       <p>These Terms of Service govern access to and use of this GitRSS service.</p>
 
       <ol className="terms-list">
-        {TERMS_SECTIONS.map((section) => (
+        {termsSection.map((section) => (
           <li key={section.id}>
             <h3>{section.title}</h3>
             <p>{section.body}</p>
@@ -335,7 +335,7 @@ function ApiDocsPage() {
 
       <div className="api-docs-shell">
         <SwaggerUI
-          url={OPENAPI_SPEC_URL}
+          url={openapiURL}
           docExpansion="list"
           displayRequestDuration
           defaultModelsExpandDepth={-1}
@@ -351,10 +351,10 @@ function FaqPage() {
 
   const filteredItems = useMemo(() => {
     if (!normalizedQuery) {
-      return FAQ_ITEMS;
+      return faqItems;
     }
 
-    return FAQ_ITEMS.filter((item) => {
+    return faqItems.filter((item) => {
       const haystack = `${item.question} ${item.answer}`.toLowerCase();
       return haystack.includes(normalizedQuery);
     });
@@ -363,7 +363,7 @@ function FaqPage() {
   return (
     <section className="card static-page" aria-labelledby="faq-title">
       <h2 id="faq-title" className="static-page_title">FAQ</h2>
-      <p className="static-page_updated">Last updated: {LAST_UPDATED}</p>
+      <p className="static-page_updated">Last updated: {lastUpdated}</p>
       <div className="faq-list">
         {filteredItems.map((item) => (
           <details key={item.id} className="faq-item">
@@ -422,7 +422,7 @@ function AdminPage() {
     setError(null);
 
     try {
-      const res = await fetch(`${API_BASE}/admin-api/overview`, {
+      const res = await fetch(`${apiBase}/admin-api/overview`, {
         headers: {
           'x-admin-password': password,
         },
@@ -462,7 +462,7 @@ function AdminPage() {
     setError(null);
 
     try {
-      const res = await fetch(`${API_BASE}/admin-api/login`, {
+      const res = await fetch(`${apiBase}/admin-api/login`, {
         method: 'POST',
         headers: {
           'content-type': 'application/json',
@@ -840,7 +840,7 @@ export default function App() {
         <div className="header-top">
           <h1 className="app-title">GitRSS</h1>
           <span className={`status-badge status-badge--${backendStatus}`}>
-            {STATUS_LABEL[backendStatus]}
+            {statusLabel[backendStatus]}
           </span>
         </div>
         <p className="app-subtitle">Generate RSS feeds for GitHub repositories</p>

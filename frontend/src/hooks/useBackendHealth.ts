@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { API_BASE } from '../config';
+import { apiBase } from '../config';
 import { logger } from '../utils/logger';
 
 export type BackendStatus = 'checking' | 'ok' | 'degraded' | 'unreachable';
@@ -22,7 +22,7 @@ export function useBackendHealth(): BackendStatus {
 
     logger.info('Checking backend health...');
 
-    fetch(`${API_BASE}/health`, { signal: controller.signal })
+    fetch(`${apiBase}/health`, { signal: controller.signal })
       .then(async (res) => {
         clearTimeout(timeoutId);
         if (res.ok) {
