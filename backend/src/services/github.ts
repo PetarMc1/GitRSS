@@ -1,7 +1,7 @@
-import { githubPaginatedRequest } from './githubClient.js';
-import { fetchCachedCommits } from './githubCommitCache.js';
+import { githubPaginatedRequest } from "./githubClient.js";
+import { fetchCachedCommits } from "./githubCommitCache.js";
 
-const GITHUB_ITEMS_PER_PAGE = 100;
+const ghItemsPerPage = 100;
 
 export type GithubCommit = {
   id: string;
@@ -71,13 +71,20 @@ export async function fetchCommitsForBranch(
   return fetchCachedCommits(owner, repo, options.branch);
 }
 
-export async function fetchIssues(owner: string, repo: string, state: 'open' | 'closed' | 'all' = 'all'): Promise<GithubIssue[]> {
-  const rawIssues = await githubPaginatedRequest<RawGithubIssue>({
-    path: `/repos/${owner}/${repo}/issues`,
-    query: {
-      state,
+export async function fetchIssues(
+  owner: string,
+  repo: string,
+  state: "open" | "closed" | "all" = "all",
+): Promise<GithubIssue[]> {
+  const rawIssues = await githubPaginatedRequest<RawGithubIssue>(
+    {
+      path: `/repos/${owner}/${repo}/issues`,
+      query: {
+        state,
+      },
     },
-  }, { perPage: GITHUB_ITEMS_PER_PAGE, maxPages: 1 });
+    { perPage: ghItemsPerPage, maxPages: 1 },
+  );
 
   return rawIssues
     .filter((issue) => !issue.pull_request)
@@ -90,15 +97,22 @@ export async function fetchIssues(owner: string, repo: string, state: 'open' | '
     }));
 }
 
-export async function fetchPullRequests(owner: string, repo: string, state: 'open' | 'closed' | 'all' = 'all'): Promise<GithubPullRequest[]> {
-  const rawPulls = await githubPaginatedRequest<RawGithubPullRequest>({
-    path: `/repos/${owner}/${repo}/pulls`,
-    query: {
-      state,
-      sort: 'updated',
-      direction: 'desc',
+export async function fetchPullRequests(
+  owner: string,
+  repo: string,
+  state: "open" | "closed" | "all" = "all",
+): Promise<GithubPullRequest[]> {
+  const rawPulls = await githubPaginatedRequest<RawGithubPullRequest>(
+    {
+      path: `/repos/${owner}/${repo}/pulls`,
+      query: {
+        state,
+        sort: "updated",
+        direction: "desc",
+      },
     },
-  }, { perPage: GITHUB_ITEMS_PER_PAGE, maxPages: 1 });
+    { perPage: ghItemsPerPage, maxPages: 1 },
+  );
 
   return rawPulls.map((pull) => ({
     id: String(pull.id),
@@ -109,10 +123,16 @@ export async function fetchPullRequests(owner: string, repo: string, state: 'ope
   }));
 }
 
-export async function fetchReleases(owner: string, repo: string): Promise<GithubRelease[]> {
-  const rawReleases = await githubPaginatedRequest<RawGithubRelease>({
-    path: `/repos/${owner}/${repo}/releases`,
-  }, { perPage: GITHUB_ITEMS_PER_PAGE, maxPages: 1 });
+export async function fetchReleases(
+  owner: string,
+  repo: string,
+): Promise<GithubRelease[]> {
+  const rawReleases = await githubPaginatedRequest<RawGithubRelease>(
+    {
+      path: `/repos/${owner}/${repo}/releases`,
+    },
+    { perPage: ghItemsPerPage, maxPages: 1 },
+  );
 
   return rawReleases
     .filter((release) => !release.draft && !!release.published_at)

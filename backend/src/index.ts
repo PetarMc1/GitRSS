@@ -1,13 +1,13 @@
-import express from 'express';
-import cors from 'cors';
-import { getGithubToken, getRedisUrl, getServerPort } from './config/env.js';
-import { adminRouter } from './routes/admin.js';
-import { rssRouter } from './routes/rss.js';
-import { buildGithubHeaders } from './services/githubClient.js';
-import { captureRequestAudit } from './services/requestAudit.js';
-import { getRedisClient, isRedisAvailable } from './services/redisClient.js';
-import { isHttpError } from './utils/http.js';
-import { logger } from './utils/logger.js';
+import express from "express";
+import cors from "cors";
+import { getGithubToken, getRedisUrl, getServerPort } from "./config/env.js";
+import { adminRouter } from "./routes/admin.js";
+import { rssRouter } from "./routes/rss.js";
+import { buildGithubHeaders } from "./services/githubClient.js";
+import { captureRequestAudit } from "./services/requestAudit.js";
+import { getRedisClient, isRedisAvailable } from "./services/redisClient.js";
+import { isHttpError } from "./utils/http.js";
+import { logger } from "./utils/logger.js";
 
 const app = express();
 const port = getServerPort();
@@ -18,31 +18,32 @@ app.use((req, res, next) => {
   captureRequestAudit(req, res);
   next();
 });
-app.use('/admin-api', adminRouter);
-app.use('/rss', async (_req, res, next) => {
+app.use("/admin-api", adminRouter);
+app.use("/rss", async (_req, res, next) => {
   const redisAvailable = await isRedisAvailable();
   if (!redisAvailable) {
     res.status(503).json({
-      status: 'degraded',
-      message: 'Service is currently unavailable due to a database outage. Please try again later.',
+      status: "degraded",
+      message:
+        "Service is currently unavailable due to a database outage. Please try again later.",
     });
     return;
   }
 
   next();
 });
-app.use('/rss', rssRouter);
+app.use("/rss", rssRouter);
 
-app.get('/health', async (_req, res) => {
+app.get("/health", async (_req, res) => {
   const redisAvailable = await isRedisAvailable();
   const githubConfigured = !!getGithubToken();
 
   const services = {
-    redis: redisAvailable ? 'up' : 'down',
-    github: githubConfigured ? 'configured' : 'unconfigured',
+    redis: redisAvailable ? "up" : "down",
+    github: githubConfigured ? "configured" : "unconfigured",
   };
 
-  const status = redisAvailable ? 'ok' : 'degraded';
+  const status = redisAvailable ? "ok" : "degraded";
 
   res.status(200).json({
     status,
@@ -71,17 +72,20 @@ async function logStartupDiagnostics(): Promise<void> {
   const redisUrl = getRedisUrl();
   try {
     const redisClient = await getRedisClient();
-    logger.info('Startup: Redis connected', { url: redisUrl, isOpen: redisClient.isOpen });
-  } catch (error) {
-    logger.warn('Startup: Redis unavailable, API routes will return status down', {
+    logger.info("Startup: Redis connected", {
       url: redisUrl,
-      message: error instanceof Error ? error.message : String(error),
+      isOpen: redisClient.isOpen,
     });
+  } catch (error) {
+    logger.warn(
+      "Startup: Redis unavailable, API routes will return status down",
+      { url: redisUrl, message: error instanceof Error ? error.message : String(error) },
+    );
   }
 
   const githubToken = getGithubToken();
   if (!githubToken) {
-    logger.warn('Startup: GitHub token not configured');
+    logger.warn("Startup: GitHub token not configured");
     return;
   }
 
@@ -89,21 +93,21 @@ async function logStartupDiagnostics(): Promise<void> {
   const timeoutId = setTimeout(() => controller.abort(), 5000);
 
   try {
-    const response = await fetch('https://api.github.com/rate_limit', {
+    const response = await fetch("https://api.github.com/rate_limit", {
       headers: buildGithubHeaders(),
       signal: controller.signal,
     });
 
     if (response.ok) {
-      logger.info('Startup: GitHub token is configured and works');
+      logger.info("Startup: GitHub token is configured and works");
       return;
     }
 
-    logger.warn('Startup: GitHub token is configured but validation failed', {
+    logger.warn("Startup: GitHub token is configured but validation failed", {
       status: response.status,
     });
   } catch (error) {
-    logger.warn('Startup: GitHub token validation could not be completed', {
+    logger.warn("Startup: GitHub token validation could not be completed", {
       message: error instanceof Error ? error.message : String(error),
     });
   } finally {
@@ -115,14 +119,13 @@ async function startServer(): Promise<void> {
   await logStartupDiagnostics();
 
   app.listen(port, () => {
-    logger.info('Startup: Backend running', { port });
+    logger.info("Startup: Backend running", { port });
   });
 }
 
 void startServer().catch((error) => {
-  logger.error('Startup failed', {
+  logger.error("Startup failed", {
     message: error instanceof Error ? error.message : String(error),
   });
   process.exit(1);
 });
-

@@ -52,12 +52,12 @@ export function parseBaseGithubQuery(rawQuery: Record<string, unknown>): BaseGit
   return { owner, repo };
 }
 
-const VALID_ITEM_STATES = ['open', 'closed', 'all'] as const;
-export type ItemState = (typeof VALID_ITEM_STATES)[number];
+const validItemStates = ['open', 'closed', 'all'] as const;
+export type ItemState = (typeof validItemStates)[number];
 
 export function parseItemState(rawQuery: Record<string, unknown>): ItemState {
   const value = rawQuery.state;
-  if (typeof value === 'string' && (VALID_ITEM_STATES as readonly string[]).includes(value.toLowerCase())) {
+  if (typeof value === 'string' && (validItemStates as readonly string[]).includes(value.toLowerCase())) {
     return value.toLowerCase() as ItemState;
   }
   return 'all';

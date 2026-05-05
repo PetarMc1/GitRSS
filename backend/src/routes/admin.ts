@@ -1,9 +1,9 @@
-import { type Request, type Router as ExpressRouter, Router } from 'express';
-import { getAdminPassword, getDeepRefreshDays } from '../config/env.js';
-import { getGithubRateLimitSnapshot } from '../services/githubRateLimitState.js';
-import { getRedisClient, isRedisAvailable } from '../services/redisClient.js';
-import { getRecentRequests } from '../services/requestAudit.js';
-import { HttpError } from '../utils/http.js';
+import { type Request, type Router as ExpressRouter, Router } from "express";
+import { getAdminPassword, getDeepRefreshDays } from "../config/env.js";
+import { getGithubRateLimitSnapshot } from "../services/githubRateLimitState.js";
+import { getRedisClient, isRedisAvailable } from "../services/redisClient.js";
+import { getRecentRequests } from "../services/requestAudit.js";
+import { HttpError } from "../utils/http.js";
 
 type CachedCommitPage = {
   commits: Array<{ id: string }>;
@@ -29,40 +29,32 @@ type RepoCacheBreakdownEntry = {
   nonDeepTtlSeconds: number | null;
 };
 
-type GithubRateLimitStatus = {
-  available: boolean;
-  limit: number | null;
-  remaining: number | null;
-  used: number | null;
-  resetAt: string | null;
-  resetsInSeconds: number | null;
-  authenticated: boolean;
-  source: 'live-headers' | 'unavailable';
-};
-
 const CACHE_PAGE_KEY_RE = /^data:(.+):commits:page:(\d+)$/;
-const MAX_ADMIN_LOGIN_ATTEMPTS = 5;
-const ADMIN_BLOCK_WINDOW_MS = 15 * 60 * 1000;
+const maxAdminLoginAttempts = 5;
+const adminBlockWindow = 15 * 60 * 1000;
 
 const adminRouter: ExpressRouter = Router();
-const adminAttemptState = new Map<string, { failures: number; blockedUntil: number | null }>();
+const adminAttemptState = new Map<
+  string,
+  { failures: number; blockedUntil: number | null }
+>();
 
 function requireAdminPasswordSet(): string {
   const configuredPassword = getAdminPassword();
   if (!configuredPassword) {
-    throw new HttpError(503, 'ADMIN_PASSWORD is not configured on the server.');
+    throw new HttpError(503, "ADMIN_PASSWORD is not configured on the server.");
   }
 
   return configuredPassword;
 }
 
 function readProvidedPassword(req: Request): string | undefined {
-  const headerPassword = req.header('x-admin-password')?.trim();
+  const headerPassword = req.header("x-admin-password")?.trim();
   return headerPassword || undefined;
 }
 
 function getRequestIp(req: Request): string {
-  return req.ip || 'unknown';
+  return req.ip || "unknown";
 }
 
 function getRetryAfterSeconds(blockedUntil: number): string {
@@ -80,9 +72,13 @@ function assertNotRateLimited(req: Request): void {
     return;
   }
 
-  throw new HttpError(429, 'Too many invalid admin password attempts. Try again later.', {
-    'Retry-After': getRetryAfterSeconds(state.blockedUntil),
-  });
+  throw new HttpError(
+    429,
+    "Too many invalid admin password attempts. Try again later.",
+    {
+      "Retry-After": getRetryAfterSeconds(state.blockedUntil),
+    },
+  );
 }
 
 function recordFailedAttempt(req: Request): void {
@@ -90,10 +86,10 @@ function recordFailedAttempt(req: Request): void {
   const current = adminAttemptState.get(ip);
   const failures = (current?.failures ?? 0) + 1;
 
-  if (failures >= MAX_ADMIN_LOGIN_ATTEMPTS) {
+  if (failures >= maxAdminLoginAttempts) {
     adminAttemptState.set(ip, {
       failures,
-      blockedUntil: Date.now() + ADMIN_BLOCK_WINDOW_MS,
+      blockedUntil: Date.now() + adminBlockWindow,
     });
     return;
   }
@@ -116,14 +112,14 @@ function assertAdminAuth(req: Request): void {
 
   if (!providedPassword || providedPassword !== configuredPassword) {
     recordFailedAttempt(req);
-    throw new HttpError(401, 'Invalid admin password.');
+    throw new HttpError(401, "Invalid admin password.");
   }
 
   clearFailedAttempts(req);
 }
 
 function parseLimit(rawLimit: unknown, fallback: number): number {
-  if (typeof rawLimit !== 'string') {
+  if (typeof rawLimit !== "string") {
     return fallback;
   }
 
@@ -139,7 +135,10 @@ async function readCachePages(): Promise<CachePageEntry[]> {
   const redis = await getRedisClient();
   const pages: CachePageEntry[] = [];
 
-  for await (const key of redis.scanIterator({ MATCH: 'data:*:commits:page:*', COUNT: 100 })) {
+  for await (const key of redis.scanIterator({
+    MATCH: "data:*:commits:page:*",
+    COUNT: 100,
+  })) {
     const match = CACHE_PAGE_KEY_RE.exec(key);
     if (!match) {
       continue;
@@ -151,7 +150,10 @@ async function readCachePages(): Promise<CachePageEntry[]> {
       continue;
     }
 
-    const [rawPage, ttlSeconds] = await Promise.all([redis.get(key), redis.ttl(key)]);
+    const [rawPage, ttlSeconds] = await Promise.all([
+      redis.get(key),
+      redis.ttl(key),
+    ]);
     if (!rawPage) {
       continue;
     }
@@ -168,11 +170,15 @@ async function readCachePages(): Promise<CachePageEntry[]> {
     });
   }
 
-  return pages
-    .sort((left, right) => Date.parse(right.lastFetched) - Date.parse(left.lastFetched));
+  return pages.sort(
+    (left, right) =>
+      Date.parse(right.lastFetched) - Date.parse(left.lastFetched),
+  );
 }
 
-function buildRepoCacheBreakdown(cachePages: CachePageEntry[]): RepoCacheBreakdownEntry[] {
+function buildRepoCacheBreakdown(
+  cachePages: CachePageEntry[],
+): RepoCacheBreakdownEntry[] {
   const byRepo = new Map<string, RepoCacheBreakdownEntry>();
 
   for (const page of cachePages) {
@@ -183,8 +189,10 @@ function buildRepoCacheBreakdown(cachePages: CachePageEntry[]): RepoCacheBreakdo
         deepCachedPages: page.isDeepCached ? 1 : 0,
         nonDeepCachedPages: page.isDeepCached ? 0 : 1,
         totalPages: 1,
-        deepTtlSeconds: page.isDeepCached && page.ttlSeconds >= 0 ? page.ttlSeconds : null,
-        nonDeepTtlSeconds: !page.isDeepCached && page.ttlSeconds >= 0 ? page.ttlSeconds : null,
+        deepTtlSeconds:
+          page.isDeepCached && page.ttlSeconds >= 0 ? page.ttlSeconds : null,
+        nonDeepTtlSeconds:
+          !page.isDeepCached && page.ttlSeconds >= 0 ? page.ttlSeconds : null,
       });
       continue;
     }
@@ -193,16 +201,18 @@ function buildRepoCacheBreakdown(cachePages: CachePageEntry[]): RepoCacheBreakdo
     if (page.isDeepCached) {
       existing.deepCachedPages += 1;
       if (page.ttlSeconds >= 0) {
-        existing.deepTtlSeconds = existing.deepTtlSeconds === null
-          ? page.ttlSeconds
-          : Math.max(existing.deepTtlSeconds, page.ttlSeconds);
+        existing.deepTtlSeconds =
+          existing.deepTtlSeconds === null
+            ? page.ttlSeconds
+            : Math.max(existing.deepTtlSeconds, page.ttlSeconds);
       }
     } else {
       existing.nonDeepCachedPages += 1;
       if (page.ttlSeconds >= 0) {
-        existing.nonDeepTtlSeconds = existing.nonDeepTtlSeconds === null
-          ? page.ttlSeconds
-          : Math.max(existing.nonDeepTtlSeconds, page.ttlSeconds);
+        existing.nonDeepTtlSeconds =
+          existing.nonDeepTtlSeconds === null
+            ? page.ttlSeconds
+            : Math.max(existing.nonDeepTtlSeconds, page.ttlSeconds);
       }
     }
   }
@@ -227,15 +237,18 @@ async function countKeys(pattern: string): Promise<number> {
   return count;
 }
 
-adminRouter.post('/login', (req, res) => {
+adminRouter.post("/login", (req, res) => {
   assertNotRateLimited(req);
 
   const configuredPassword = requireAdminPasswordSet();
-  const providedPassword = typeof req.body?.password === 'string' ? req.body.password.trim() : undefined;
+  const providedPassword =
+    typeof req.body?.password === "string"
+      ? req.body.password.trim()
+      : undefined;
 
   if (!providedPassword || providedPassword !== configuredPassword) {
     recordFailedAttempt(req);
-    throw new HttpError(401, 'Invalid admin password.');
+    throw new HttpError(401, "Invalid admin password.");
   }
 
   clearFailedAttempts(req);
@@ -243,7 +256,7 @@ adminRouter.post('/login', (req, res) => {
   res.status(200).json({ ok: true });
 });
 
-adminRouter.get('/overview', async (req, res) => {
+adminRouter.get("/overview", async (req, res) => {
   assertAdminAuth(req);
 
   const requestsLimit = parseLimit(req.query.requests, 10);
@@ -251,38 +264,21 @@ adminRouter.get('/overview', async (req, res) => {
   const redisAvailable = await isRedisAvailable();
 
   if (!redisAvailable) {
-    res.status(200).json({
-      generatedAt: new Date().toISOString(),
-      status: 'degraded',
-      message: 'Cache service (Redis) is unavailable. Cache data cannot be retrieved.',
-      redisAvailable: false,
-      deepRefreshDays: getDeepRefreshDays(),
-      githubRateLimit,
-      recentRequests: getRecentRequests(requestsLimit),
-      cache: {
-        summary: {
-          dataPages: 0,
-          deepCachedPages: 0,
-          nonDeepCachedPages: 0,
-          etagKeys: 0,
-          metadataKeys: 0,
-          notificationsKeys: 0,
-        },
-        pages: [],
-        deepPages: [],
-        nonDeepPages: [],
-        repoBreakdown: [],
-      },
+    res.status(503).json({
+      status: "degraded",
+      message:
+        "Cache service (Redis) is unavailable. Cache data cannot be retrieved.",
     });
     return;
   }
 
-  const [cachePages, etagKeys, metadataKeys, notificationsKeys] = await Promise.all([
-    readCachePages(),
-    countKeys('etag:*:commits:page:*'),
-    countKeys('meta:*:commits'),
-    countKeys('notifications:*:sync'),
-  ]);
+  const [cachePages, etagKeys, metadataKeys, notificationsKeys] =
+    await Promise.all([
+      readCachePages(),
+      countKeys("etag:*:commits:page:*"),
+      countKeys("meta:*:commits"),
+      countKeys("notifications:*:sync"),
+    ]);
 
   const deepPages = cachePages.filter((entry) => entry.isDeepCached);
   const nonDeepPages = cachePages.filter((entry) => !entry.isDeepCached);
@@ -294,8 +290,6 @@ adminRouter.get('/overview', async (req, res) => {
 
   res.status(200).json({
     generatedAt: new Date().toISOString(),
-    status: 'ok',
-    message: null,
     redisAvailable: true,
     deepRefreshDays: getDeepRefreshDays(),
     githubRateLimit,

@@ -1,6 +1,6 @@
-import type { Request, Response } from 'express';
+import type { Request, Response } from "express";
 
-const MAX_REQUEST_AUDIT_ITEMS = 100;
+const maxReqItems = 100;
 
 export type RecentRequest = {
   at: string;
@@ -15,26 +15,26 @@ const requestAudit: RecentRequest[] = [];
 
 function pushRequestAudit(item: RecentRequest): void {
   requestAudit.unshift(item);
-  if (requestAudit.length > MAX_REQUEST_AUDIT_ITEMS) {
-    requestAudit.length = MAX_REQUEST_AUDIT_ITEMS;
+  if (requestAudit.length > maxReqItems) {
+    requestAudit.length = maxReqItems;
   }
 }
 
 export function captureRequestAudit(req: Request, res: Response): void {
-  if (!req.originalUrl.startsWith('/rss')) {
+  if (!req.originalUrl.startsWith("/rss")) {
     return;
   }
 
   const startedAt = Date.now();
 
-  res.on('finish', () => {
+  res.on("finish", () => {
     pushRequestAudit({
       at: new Date().toISOString(),
       method: req.method,
       path: req.originalUrl,
       statusCode: res.statusCode,
       durationMs: Math.max(0, Date.now() - startedAt),
-      ip: req.ip || 'unknown',
+      ip: req.ip || "unknown",
     });
   });
 }
