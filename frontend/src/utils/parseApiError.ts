@@ -1,9 +1,11 @@
 interface ApiErrorBody {
   error?: string;
+  status?: string;
+  message?: string;
 }
 
 export function parseApiError(status: number, body: ApiErrorBody | null): string {
-  const serverMsg = body?.error ?? null;
+  const serverMsg = body?.message ?? body?.error ?? null;
 
   switch (status) {
     case 400:
@@ -17,8 +19,10 @@ export function parseApiError(status: number, body: ApiErrorBody | null): string
 
     case 500:
     case 502:
-    case 503:
       return 'Backend error. Please try again later.';
+
+    case 503:
+      return serverMsg ?? 'Service unavailable. Please try again later.';
 
     default:
       return serverMsg ?? `Unexpected error (HTTP ${status}).`;

@@ -2,7 +2,16 @@ import { useEffect, useState } from 'react';
 import { API_BASE } from '../config';
 import { logger } from '../utils/logger';
 
-export type BackendStatus = 'checking' | 'ok' | 'unreachable';
+export type BackendStatus = 'checking' | 'ok' | 'degraded' | 'unreachable';
+
+type HealthResponse = {
+  status: string;
+  services: {
+    redis: string;
+    github: string;
+  };
+  timestamp: string;
+};
 
 export function useBackendHealth(): BackendStatus {
   const [status, setStatus] = useState<BackendStatus>('checking');
@@ -17,8 +26,19 @@ export function useBackendHealth(): BackendStatus {
       .then(async (res) => {
         clearTimeout(timeoutId);
         if (res.ok) {
-          logger.info('Backend reachable');
-          setStatus('ok');
+          try {
+            const data = (await res.json()) as HealthResponse;
+            if (data.status === 'degraded') {
+              logger.warn('Backend degraded', data.services);
+              setStatus('degraded');
+            } else {
+              logger.info('Backend reachable', data.services);
+              setStatus('ok');
+            }
+          } catch {
+            logger.info('Backend reachable (non-JSON)');
+            setStatus('ok');
+          }
         } else {
           logger.warn('Backend health check returned', res.status);
           setStatus('unreachable');

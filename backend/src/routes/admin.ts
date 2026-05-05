@@ -253,6 +253,8 @@ adminRouter.get('/overview', async (req, res) => {
   if (!redisAvailable) {
     res.status(200).json({
       generatedAt: new Date().toISOString(),
+      status: 'degraded',
+      message: 'Cache service (Redis) is unavailable. Cache data cannot be retrieved.',
       redisAvailable: false,
       deepRefreshDays: getDeepRefreshDays(),
       githubRateLimit,
@@ -292,6 +294,8 @@ adminRouter.get('/overview', async (req, res) => {
 
   res.status(200).json({
     generatedAt: new Date().toISOString(),
+    status: 'ok',
+    message: null,
     redisAvailable: true,
     deepRefreshDays: getDeepRefreshDays(),
     githubRateLimit,

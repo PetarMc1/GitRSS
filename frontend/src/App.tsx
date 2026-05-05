@@ -18,6 +18,7 @@ import './App.css';
 const STATUS_LABEL: Record<string, string> = {
   checking: 'Backend: checking…',
   ok: 'Backend: online',
+  degraded: 'Backend: degraded',
   unreachable: 'Backend: offline',
 };
 
@@ -60,6 +61,8 @@ type CachePageEntry = {
 
 type AdminOverview = {
   generatedAt: string;
+  status: 'ok' | 'degraded';
+  message: string | null;
   redisAvailable: boolean;
   deepRefreshDays: number;
   githubRateLimit: {
@@ -559,6 +562,10 @@ function AdminPage() {
 
         {error && <p className="error-msg" role="alert">{error}</p>}
 
+        {overview?.status === 'degraded' && overview.message && (
+          <p className="error-msg" role="status">{overview.message}</p>
+        )}
+
         {loading && !overview && <p className="static-page_empty">Loading admin data...</p>}
 
         {overview && (
@@ -732,7 +739,7 @@ function AdminPage() {
 function HomePage({
   backendStatus,
 }: {
-  backendStatus: 'checking' | 'ok' | 'unreachable';
+  backendStatus: 'checking' | 'ok' | 'degraded' | 'unreachable';
 }) {
   const [repo, setRepo] = useState('');
   const [feedType, setFeedType] = useState<FeedType>('commits');
@@ -806,7 +813,7 @@ function HomePage({
           onClick={handleGenerate}
           type="button"
           disabled={backendStatus === 'unreachable'}
-          title={backendStatus === 'unreachable' ? 'Backend is offline' : undefined}
+          title={backendStatus === 'unreachable' ? 'Backend is offline' : backendStatus === 'degraded' ? 'Some backend services are degraded' : undefined}
         >
           Generate RSS Feed
         </button>

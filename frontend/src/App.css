@@ -342,6 +342,18 @@ body {
   color: var(--error);
 }
 
+.status-badge--degraded {
+  background: #fff7ed;
+  border-color: #fdba74;
+  color: #7c2d12;
+}
+
+.status-badge--degraded::before {
+  content: '●';
+  font-size: 0.6rem;
+  color: #f97316;
+}
+
 .btn:disabled {
   opacity: 0.45;
   cursor: not-allowed;
@@ -713,6 +725,12 @@ body {
     background: #450a0a;
     border-color: #b91c1c;
     color: #fecaca;
+  }
+
+  .status-badge--degraded {
+    background: #431407;
+    border-color: #c2410c;
+    color: #fed7aa;
   }
 
   .preview-content {

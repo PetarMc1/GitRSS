@@ -22,7 +22,10 @@ app.use('/admin-api', adminRouter);
 app.use('/rss', async (_req, res, next) => {
   const redisAvailable = await isRedisAvailable();
   if (!redisAvailable) {
-    res.status(503).json({ status: 'down', service: 'backend', db: 'down' });
+    res.status(503).json({
+      status: 'degraded',
+      message: 'Service is currently unavailable due to a database outage. Please try again later.',
+    });
     return;
   }
 
@@ -32,12 +35,20 @@ app.use('/rss', rssRouter);
 
 app.get('/health', async (_req, res) => {
   const redisAvailable = await isRedisAvailable();
-  if (!redisAvailable) {
-    res.status(503).type('text/plain').send('not ok');
-    return;
-  }
+  const githubConfigured = !!getGithubToken();
 
-  res.status(200).type('text/plain').send('ok');
+  const services = {
+    redis: redisAvailable ? 'up' : 'down',
+    github: githubConfigured ? 'configured' : 'unconfigured',
+  };
+
+  const status = redisAvailable ? 'ok' : 'degraded';
+
+  res.status(200).json({
+    status,
+    services,
+    timestamp: new Date().toISOString(),
+  });
 });
 
 app.use((error: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
