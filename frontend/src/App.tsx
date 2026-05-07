@@ -219,31 +219,20 @@ function HeaderNav({ route }: { route: AppRoute }) {
       </a>
       <a
         className={`top-nav_link ${route === '/faq' ? 'top-nav_link-active' : ''}`}
-        href="/faq"
-        onClick={(event) => {
-          event.preventDefault();
-          navigateTo('/faq');
-        }}
+        href="https://gittools.ptrmc.net/faq/gitrss"
       >
         FAQ
       </a>
       <a
         className={`top-nav_link ${route === '/api-docs' ? 'top-nav_link-active' : ''}`}
-        href="/api-docs"
-        onClick={(event) => {
-          event.preventDefault();
-          navigateTo('/api-docs');
-        }}
+        href="https://gittools.ptrmc.net/api-docs"
+        
       >
         API Docs
       </a>
       <a
         className={`top-nav_link ${route === '/terms' ? 'top-nav_link-active' : ''}`}
-        href="/terms"
-        onClick={(event) => {
-          event.preventDefault();
-          navigateTo('/terms');
-        }}
+        href="https://gittools.ptrmc.net/terms/gitrss"
       >
         Terms
       </a>
@@ -268,31 +257,19 @@ function FooterNav() {
         </a>
         <span aria-hidden="true">•</span>
         <a
-          href="/faq"
-          onClick={(event) => {
-            event.preventDefault();
-            navigateTo('/faq');
-          }}
+          href="https://gittools.ptrmc.net/faq/gitrss"
         >
           FAQ
         </a>
         <span aria-hidden="true">•</span>
         <a
-          href="/api-docs"
-          onClick={(event) => {
-            event.preventDefault();
-            navigateTo('/api-docs');
-          }}
+          href="https://gittools.ptrmc.net/api-docs"
         >
           API Docs
         </a>
         <span aria-hidden="true">•</span>
         <a
-          href="/terms"
-          onClick={(event) => {
-            event.preventDefault();
-            navigateTo('/terms');
-          }}
+          href="https://gittools.ptrmc.net/terms/gitrss"
         >
           Terms
         </a>
@@ -305,76 +282,6 @@ function FooterNav() {
   );
 }
 
-function TermsPage() {
-  return (
-    <section className="card static-page" aria-labelledby="terms-title">
-      <h2 id="terms-title" className="static-page_title">Terms of Service</h2>
-      <p className="static-page_updated">Last updated: {lastUpdated}</p>
-      <p>These Terms of Service govern access to and use of this GitRSS service.</p>
-
-      <ol className="terms-list">
-        {termsSection.map((section) => (
-          <li key={section.id}>
-            <h3>{section.title}</h3>
-            <p>{section.body}</p>
-          </li>
-        ))}
-      </ol>
-
-      <p>By using the service, you acknowledge and accept these conditions.</p>
-    </section>
-  );
-}
-
-function ApiDocsPage() {
-  return (
-    <section className="api-docs-page" aria-labelledby="api-docs-title">
-      <div className="api-docs-header">
-        <h2 id="api-docs-title" className="static-page_title">API Docs</h2>
-      </div>
-
-      <div className="api-docs-shell">
-        <SwaggerUI
-          url={openapiURL}
-          docExpansion="list"
-          displayRequestDuration
-          defaultModelsExpandDepth={-1}
-        />
-      </div>
-    </section>
-  );
-}
-
-function FaqPage() {
-  const [query, setQuery] = useState('');
-  const normalizedQuery = query.trim().toLowerCase();
-
-  const filteredItems = useMemo(() => {
-    if (!normalizedQuery) {
-      return faqItems;
-    }
-
-    return faqItems.filter((item) => {
-      const haystack = `${item.question} ${item.answer}`.toLowerCase();
-      return haystack.includes(normalizedQuery);
-    });
-  }, [normalizedQuery]);
-
-  return (
-    <section className="card static-page" aria-labelledby="faq-title">
-      <h2 id="faq-title" className="static-page_title">FAQ</h2>
-      <p className="static-page_updated">Last updated: {lastUpdated}</p>
-      <div className="faq-list">
-        {filteredItems.map((item) => (
-          <details key={item.id} className="faq-item">
-            <summary>{item.question}</summary>
-            <p>{item.answer}</p>
-          </details>
-        ))}
-      </div>
-    </section>
-  );
-}
 
 function formatDateTime(value: string): string {
   const parsed = new Date(value);
@@ -849,9 +756,6 @@ export default function App() {
 
       {route === '/' && <HomePage backendStatus={backendStatus} />}
       {route === '/admin' && <AdminPage />}
-      {route === '/faq' && <FaqPage />}
-      {route === '/terms' && <TermsPage />}
-      {route === '/api-docs' && <ApiDocsPage />}
       <FooterNav />
     </div>
   );
