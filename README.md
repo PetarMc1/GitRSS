@@ -18,6 +18,8 @@ A tool used to generate RSS feeds for GitHub repositories, providing updates on 
 
 The app can be deployed using Docker. A `docker-compose.yml` file is provided for easy setup with Redis. The images are available at [Docker Hub](https://hub.docker.com/r/petarmc/gitrss).
 
+The `latest` tag is the latest stable release, while `dev` is the latest development version (latest commit). You can also specify a specific version tag.
+
 To run with Docker Compose:
 
 ```bash
