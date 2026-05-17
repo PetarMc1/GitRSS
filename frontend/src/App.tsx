@@ -14,6 +14,7 @@ import { parseApiError, parseNetworkError } from './utils/parseApiError';
 import { validateForm } from './utils/validation';
 import 'swagger-ui-react/swagger-ui.css';
 import './App.css';
+import { Helmet } from 'react-helmet-async';
 
 const statusLabel: Record<string, string> = {
   checking: 'Backend: checking…',
@@ -294,6 +295,12 @@ function FooterNav() {
 
 function TermsPage() {
   return (
+   <>
+  <Helmet>
+    <title>GitRSS | Terms</title>
+    <meta name="robots" content="noindex, nofollow" />
+  </Helmet>
+
     <section className="card static-page" aria-labelledby="terms-title">
       <h2 id="terms-title" className="static-page_title">Terms of Service</h2>
       <p className="static-page_updated">Last updated: {lastUpdated}</p>
@@ -310,6 +317,7 @@ function TermsPage() {
 
       <p>By using the service, you acknowledge and accept these conditions.</p>
     </section>
+    </>
   );
 }
 
@@ -348,7 +356,13 @@ function FaqPage() {
   }, [normalizedQuery]);
 
   return (
-    <section className="card static-page" aria-labelledby="faq-title">
+    <>
+    <Helmet>
+      <title>GitRSS | FAQ</title>
+      <meta name="robots" content="noindex, nofollow" />
+    </Helmet>
+    
+      <section className="card static-page" aria-labelledby="faq-title">
       <h2 id="faq-title" className="static-page_title">FAQ</h2>
       <p className="static-page_updated">Last updated: {lastUpdated}</p>
       <div className="faq-list">
@@ -360,6 +374,7 @@ function FaqPage() {
         ))}
       </div>
     </section>
+    </>
   );
 }
 
@@ -491,6 +506,11 @@ function AdminPage() {
 
   if (!adminPassword) {
     return (
+      <>
+      <Helmet>
+        <title>GitRSS | Admin LogIn</title>
+        <meta name="robots" content="noindex, nofollow" />
+      </Helmet>
       <section className="card static-page" aria-labelledby="admin-login-title">
         <h2 id="admin-login-title" className="static-page_title">Admin</h2>
         <p className="static-page_updated">Sign in with the admin password configured on the backend.</p>
@@ -514,10 +534,16 @@ function AdminPage() {
           {loading ? 'Signing in…' : 'Sign in'}
         </button>
       </section>
+      </>
     );
   }
 
   return (
+    <>
+    <Helmet>
+      <title>GitRSS | Admin</title>
+      <meta name="robots" content="noindex, nofollow" />
+    </Helmet>
     <section className="admin-page" aria-labelledby="admin-title">
       <div className="card static-page">
         <div className="admin-header-row">
@@ -720,6 +746,7 @@ function AdminPage() {
         )}
       </div>
     </section>
+    </>
   );
 }
 
@@ -770,6 +797,26 @@ function HomePage({
   };
 
   return (
+    <>
+    <Helmet>
+      <meta property="og:type" content="website"/>
+      <meta name="twitter:card" content="summary"/>
+      <title>GitRSS - GitHub Repository RSS Feed Generator</title>
+      <meta name="pagename" content="GitRSS - GitHub Repository RSS Feed Generator"/>
+      <meta property="og:title" content="GitRSS - GitHub Repository RSS Feed Generator"/>
+      <meta name="twitter:title" content="GitRSS - GitHub Repository RSS Feed Generator"/>
+      <meta name="description" content="Generate RSS feeds for GitHub repositories, commits, releases, tags, issues, and pull requests with GitRSS. Simple, fast, and free GitHub RSS feed generation for developers and automation workflows."/>
+      <meta property="og:description" content="Generate RSS feeds for GitHub repositories, commits, releases, tags, issues, and pull requests with GitRSS. Simple, fast, and free GitHub RSS feed generation for developers and automation workflows."/>
+      <meta name="twitter:description" content="Generate RSS feeds for GitHub repositories, commits, releases, tags, issues, and pull requests with GitRSS. Simple, fast, and free GitHub RSS feed generation for developers and automation workflows."/>
+      <meta name="keywords" content="GitRSS, GitHub RSS, GitHub RSS feed, GitHub feed generator, repository RSS, GitHub commits RSS, GitHub releases RSS, GitHub issues RSS, GitHub pull requests RSS, developer tools, RSS generator, GitHub monitoring, repository tracking, GitHub automation, GitHub notifications, RSS reader, open source tools, GitHub activity tracker"/>
+      <meta name="news_keywords" content="GitRSS, GitHub RSS, GitHub RSS feed, GitHub feed generator, repository RSS, GitHub commits RSS, GitHub releases RSS, GitHub issues RSS, GitHub pull requests RSS, developer tools, RSS generator, GitHub monitoring, repository tracking, GitHub automation, GitHub notifications, RSS reader, open source tools, GitHub activity tracker"/>
+      <meta name="url" content="https://gitrss.petarmc.com"/>
+      <meta property="og:url" content="https://gitrss.petarmc.com"/>
+      <meta name="twitter:url" content="https://gitrss.petarmc.com"/>
+      <link rel="canonical" href="https://gitrss.petarmc.com"/>
+      <meta property="og:site_name" content="GitRSS"/>
+      <meta name="robots" content="index, follow" />
+    </Helmet>
     <main className="app-main">
       <div className="card">
         <RepoInput value={repo} onChange={handleRepoChange} />
@@ -808,6 +855,7 @@ function HomePage({
 
       {generatedUrl && <RssOutput key={generatedUrl} url={generatedUrl} />}
     </main>
+    </>
   );
 }
 
