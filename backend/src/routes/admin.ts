@@ -135,11 +135,22 @@ async function readCachePages(): Promise<CachePageEntry[]> {
   const redis = await getRedisClient();
   const pages: CachePageEntry[] = [];
 
-  for await (const key of redis.scanIterator({
+  for await (const keyCandidate of redis.scanIterator({
     MATCH: "data:*:page:*",
     COUNT: 100,
   })) {
-    const match = CACHE_PAGE_KEY_RE.exec(key);
+    const keyStr =
+      typeof keyCandidate === "string"
+        ? keyCandidate
+        : Array.isArray(keyCandidate) && typeof keyCandidate[0] === "string"
+        ? keyCandidate[0]
+        : null;
+
+    if (!keyStr) {
+      continue;
+    }
+
+    const match = CACHE_PAGE_KEY_RE.exec(keyStr);
     if (!match) {
       continue;
     }
@@ -151,8 +162,8 @@ async function readCachePages(): Promise<CachePageEntry[]> {
     }
 
     const [rawPage, ttlSeconds] = await Promise.all([
-      redis.get(key),
-      redis.ttl(key),
+      redis.get(keyStr),
+      redis.ttl(keyStr),
     ]);
     if (!rawPage) {
       continue;
@@ -160,7 +171,7 @@ async function readCachePages(): Promise<CachePageEntry[]> {
 
     const parsed = JSON.parse(rawPage) as CachedItemPage;
     pages.push({
-      key,
+      key: keyStr,
       repoScope,
       page,
       isDeepCached: page > 1,
